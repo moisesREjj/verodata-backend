@@ -14,10 +14,29 @@ dotenv.config()
 const app = express()
 const PORT = process.env.PORT || 3001
 
+// 🌐 Configuración dinámica de CORS para Producción y Local
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:5174',
+  process.env.FRONTEND_URL // 👈 Esta variable la configuraremos en Render con tu URL de Vercel
+].filter(Boolean) as string[]; // Filtra valores undefined si la variable no está seteada en local
+
 app.use(cors({
-  origin: ['http://localhost:5173', 'http://localhost:3000', 'http://127.0.0.1:5173'],
+  origin: (origin, callback) => {
+    // Permitir peticiones sin origen (como herramientas Postman, llamadas móviles o del mismo servidor)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Bloqueado por políticas de CORS de VeroData'));
+    }
+  },
   credentials: true,
-}))
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
 app.use(express.json())
 
 app.get('/api/health', (_req, res) => {
@@ -36,7 +55,7 @@ app.use((_req, res) => {
 })
 
 app.listen(PORT, () => {
-  console.log(`VeroData Retail API corriendo en http://localhost:${PORT}`)
+  console.log(`VeroData Retail API corriendo en el puerto: ${PORT}`)
 })
 
 export default app

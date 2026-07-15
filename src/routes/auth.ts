@@ -46,7 +46,17 @@ router.post('/login', async (req: Request, res: Response) => {
       return
     }
 
-    const rolNombre = (usuario as any).roles?.nombre || 'ROLE_CLIENTE'
+    // 🛡️ Soporta si roles viene como objeto {} o como array [{}]
+    let rolNombre = 'ROLE_CLIENTE'
+    const rolesData = (usuario as any).roles
+
+    if (rolesData) {
+      if (Array.isArray(rolesData) && rolesData.length > 0) {
+        rolNombre = rolesData[0].nombre
+      } else if (rolesData.nombre) {
+        rolNombre = rolesData.nombre
+      }
+    }
 
     const token = jwt.sign(
       {
