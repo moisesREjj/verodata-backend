@@ -20,7 +20,7 @@ router.post('/login', async (req: Request, res: Response) => {
 
     const { data: usuario, error } = await supabase
       .from('usuarios')
-      .select('id, email, password, nombre, id_rol, activo, roles!inner(nombre)')
+      .select('id, email, password, nombre, id_rol, activo, roles(nombre)') // <- Quitamo s el !inner
       .eq('email', email.toLowerCase().trim())
       .maybeSingle()
 
