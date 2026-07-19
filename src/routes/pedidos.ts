@@ -72,8 +72,7 @@ router.get('/:id', async (req: Request, res: Response) => {
 
 router.post('/', async (req: Request, res: Response) => {
   try {
-    const { items, nombre_envio, direccion_envio, ciudad_envio, codigo_postal, telefono_envio } = req.body
-
+        const { items, nombre_envio, direccion_envio, ciudad_envio, codigo_postal, telefono_envio, metodo_pago } = req.body
     if (!items || !Array.isArray(items) || items.length === 0) {
       res.status(400).json({ mensaje: 'Se requiere al menos un item en el pedido.' })
       return
@@ -102,21 +101,22 @@ router.post('/', async (req: Request, res: Response) => {
 
     const codigo = `ORD-${String(Date.now()).slice(-6)}`
 
-    const { data: pedido, error: pedidoError } = await supabase
-      .from('pedidos')
-      .insert({
-        codigo,
-        estado: 'Carrito',
-        total,
-        id_usuario: req.user!.user_id,
-        nombre_envio,
-        direccion_envio,
-        ciudad_envio,
-        codigo_postal,
-        telefono_envio,
-      })
-      .select()
-      .single()
+   const { data: pedido, error: pedidoError } = await supabase
+  .from('pedidos')
+  .insert({
+    codigo,
+    estado: 'Carrito',
+    total,
+    id_usuario: req.user!.user_id,
+    nombre_envio,
+    direccion_envio,
+    ciudad_envio,
+    codigo_postal,
+    telefono_envio,
+    metodo_pago // <-- Agregamos esta línea para guardarlo
+  })
+  .select()
+  .single()
 
     if (pedidoError) {
       res.status(500).json({ mensaje: 'Error al crear pedido.' })
@@ -147,8 +147,7 @@ router.post('/', async (req: Request, res: Response) => {
   }
 })
 
-router.put('/:id/estado', authorize('ROLE_ADMIN'), async (req: Request, res: Response) => {
-  try {
+router.put('/:id/estado', authorize('ROLE_ADMIN', 'ROLE_ANALISTA', 'ROLE_USER', 'ROLE_CLIENTE'), async (req: Request, res: Response) => {  try {
     const { estado } = req.body
     const estadosValidos = ['Carrito', 'Pagado', 'Enviado', 'Cancelado']
 
